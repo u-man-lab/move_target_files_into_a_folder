@@ -1,0 +1,7 @@
+/__pycache__
+/data
+/results
+
+/configs/*
+!/configs/move_target_files_into_a_folder.yaml
+!/configs/undo_move_target_files_into_a_folder.yaml

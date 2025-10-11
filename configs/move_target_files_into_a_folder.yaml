@@ -1,0 +1,22 @@
+## configuration file for "move_target_files_into_a_folder.py" ##
+# NOTE: All fields are required.
+
+MOVE_FROM:
+
+  # All of the target file paths in the TXTs must exist and be absolute.
+  TARGET_FILE_ABSOLUTE_PATHS_TXT:
+    ENCODING: 'utf-8'
+    FOLDER_PATH: './data/target_file_absolute_paths_txt'
+
+MOVE_TO:
+
+  # A blank folder in which new folders will be created as the same name as TARGET_FILE_ABSOLUTE_PATHS_TXT.
+  # Listed files will be moved in the each folders.
+  FOLDER_PATH: './results/moved_files'
+  # Character used to join path of target files, so it must not be used in any of the paths.
+  TARGET_FILES_PATH_JOIN_CHAR: '@'
+
+# CSV for logging paths of move_from & move_to.
+MOVE_LOG_CSV:
+  PATH: './results/move_log.csv'
+  ENCODING: 'utf-8-sig'

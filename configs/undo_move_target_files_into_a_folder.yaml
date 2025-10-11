@@ -1,0 +1,15 @@
+## configuration file for "undo_move_target_files_into_a_folder.py" ##
+# NOTE: All fields are required.
+
+# Corresponds to "MOVE_TO" field in a config file of "move_target_files_into_a_folder.py".
+MOVE_TO:
+
+  # A folder containing folders which contains moved files.
+  FOLDER_PATH: './results/moved_files'
+  # Character used to join original path of moved files, so it must be in all of the moved files' name.
+  TARGET_FILES_PATH_JOIN_CHAR: '@'
+
+# CSV for logging paths of move_from & move_to.
+MOVE_LOG_CSV:
+  PATH: './results/undo_move_log.csv'
+  ENCODING: 'utf-8-sig'
