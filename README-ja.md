@@ -14,13 +14,13 @@
 例えば、元のファイルが以下のように配置されているとします。
 ```
 /photos/family/birthday.jpg
-/photos/pets/dog.png
+/images/pets/dog.png
 ```
 
 `move_target_files_into_a_folder.py`を実行すると、両ファイルは以下のような単一フォルダ配下に移動されます。
 ```
-/merged/file1.txt/photos_family_birthday.jpg
-/merged/file2.txt/photos_pets_dog.png
+/target_folder/file1.txt/photos_family_birthday.jpg
+/target_folder/file2.txt/photos_pets_dog.png
 ```
 
 その後、`undo_move_target_files_into_a_folder.py`を実行すると、ファイルは元のパスに戻ります。

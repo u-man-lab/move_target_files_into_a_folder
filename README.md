@@ -14,13 +14,13 @@ Both scripts perform strict pre-validation before any file operation to ensure c
 For example, suppose the original files are located as follows:
 ```
 /photos/family/birthday.jpg
-/photos/pets/dog.png
+/images/pets/dog.png
 ```
 
 After running `move_target_files_into_a_folder.py`, both files are moved into one folder such as:
 ```
-/merged/file1.txt/photos_family_birthday.jpg
-/merged/file2.txt/photos_pets_dog.png
+/target_folder/file1.txt/photos_family_birthday.jpg
+/target_folder/file2.txt/photos_pets_dog.png
 ```
 
 Then, running `undo_move_target_files_into_a_folder.py` restores them back to their original paths.
