@@ -19,8 +19,8 @@ For example, suppose the original files are located as follows:
 
 After running `move_target_files_into_a_folder.py`, both files are moved into one folder such as:
 ```
-/target_folder/file1.txt/photos_family_birthday.jpg
-/target_folder/file2.txt/photos_pets_dog.png
+/target_folder/file1.txt/photos@family@birthday.jpg
+/target_folder/file2.txt/photos@pets@dog.png
 ```
 
 Then, running `undo_move_target_files_into_a_folder.py` restores them back to their original paths.
