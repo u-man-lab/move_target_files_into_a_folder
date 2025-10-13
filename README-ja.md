@@ -20,7 +20,7 @@
 `move_target_files_into_a_folder.py`を実行すると、両ファイルは以下のような単一フォルダ配下に移動されます。
 ```
 /target_folder/file1.txt/photos@family@birthday.jpg
-/target_folder/file2.txt/photos@pets@dog.png
+/target_folder/file2.txt/images@pets@dog.png
 ```
 
 その後、`undo_move_target_files_into_a_folder.py`を実行すると、ファイルは元のパスに戻ります。
