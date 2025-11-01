@@ -16,48 +16,11 @@ from pydantic import (
     field_validator,
 )
 
-from move_target_files_into_a_folder import CharsToEscapeInPath, NewTxtConfig
-
-
-class FilesContainingFolder:
-    """Represents a folder that directly contains files to be processed.
-
-    This class validates that the specified folder exists, is readable,
-    and contains only files (no subfolders). It also provides access
-    to the folder path and its contained file paths as immutable tuples.
-
-    Attributes:
-        __path (Path): Path object of the target folder.
-        __file_paths (tuple[Path, ...]): Tuple of file paths contained in the folder.
-
-    Raises:
-        PermissionError: If the folder cannot be read due to insufficient permissions.
-        FileNotFoundError: If the folder is empty, or
-                           if a non-file object (e.g., subdirectory) exists in the folder.
-    """
-
-    def __init__(self, path: Path):
-        self.__path = path
-
-        try:
-            self.__file_paths = tuple(self.__path.iterdir())
-        except PermissionError as err:
-            raise PermissionError(f'No read permission for the folder.: "{self.__path}"') from err
-
-        if not self.__file_paths:
-            raise ValueError(f'No files were found in the folder.: "{self.__path}"')
-
-        for file_path in self.__file_paths:
-            if not file_path.is_file():
-                raise ValueError(f'Non-file object in the folder.: "{self.__path}"')
-
-    @property
-    def path(self) -> Path:
-        return self.__path
-
-    @property
-    def file_paths(self) -> tuple[Path, ...]:
-        return self.__file_paths
+from move_target_files_into_a_folder import (
+    CharsToEscapeInPath,
+    FilesContainingFolder,
+    NewTxtConfig,
+)
 
 
 class UndoMoveToConfig(BaseModel):

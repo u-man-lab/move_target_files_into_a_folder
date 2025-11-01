@@ -47,6 +47,51 @@ class EncodingStr:
         return arg
 
 
+class FilesContainingFolder:
+    """Represents a folder that directly contains files to be processed.
+
+    This class validates that the specified folder exists, is readable,
+    and contains only files (no subfolders). It also provides access
+    to the folder path and its contained file paths as immutable tuples.
+
+    Attributes:
+        __path (Path): Path object of the target folder.
+        __file_paths (tuple[Path, ...]): Tuple of file paths contained in the folder.
+
+    Raises:
+        PermissionError: If the folder cannot be read due to insufficient permissions.
+        FileNotFoundError: If the folder is empty, or
+                           if a non-file object (e.g., subdirectory) exists in the folder.
+    """
+
+    def __init__(self, path: Path):
+        self.__path = path
+
+        if not self.__path.is_dir():
+            raise ValueError(f'It is not an existing folder.: "{self.__path}"')
+
+        try:
+            child_paths = tuple(self.__path.iterdir())
+        except PermissionError as err:
+            raise PermissionError(f'No read permission for the folder.: "{self.__path}"') from err
+
+        if not child_paths:
+            raise ValueError(f'No files were found in the folder.: "{self.__path}"')
+
+        for child_path in child_paths:
+            if not child_path.is_file():
+                raise ValueError(f'Non-file object in the folder.: "{self.__path}"')
+        self.__file_paths = child_paths
+
+    @property
+    def path(self) -> Path:
+        return self.__path
+
+    @property
+    def file_paths(self) -> tuple[Path, ...]:
+        return self.__file_paths
+
+
 class TxtsInFolderConfig(BaseModel):
     """Configuration for txt files which encoding is the same in a folder.
 
@@ -56,9 +101,7 @@ class TxtsInFolderConfig(BaseModel):
     """
 
     ENCODING: EncodingStr
-    FOLDER_PATH: DirectoryPath  # Must be existing directory
-
-    __txt_paths: tuple[Path, ...] = PrivateAttr()
+    FOLDER_PATH: FilesContainingFolder
 
     model_config = ConfigDict(
         frozen=True, extra='forbid', strict=True, arbitrary_types_allowed=True
@@ -73,42 +116,12 @@ class TxtsInFolderConfig(BaseModel):
 
     @field_validator('FOLDER_PATH', mode='before')
     @classmethod
-    def __convert_str_to_path_and_validate(cls, arg: Any) -> Path:
+    def __convert_str_to_files_containing_folder_and_validate(
+        cls, arg: Any
+    ) -> FilesContainingFolder:
         if not isinstance(arg, str):
             raise TypeError(f'The argument must be a string, got "{arg}" [{type(arg)}].')
-        return Path(arg.strip())
-
-    def __get_txt_paths(self) -> tuple[Path, ...]:
-        """Get txt paths in the folder.
-
-        Raises:
-            PermissionError: If the folder is not readable.
-            ValueError: If the folder is blank or if any non-file object is in the folder.
-        """
-
-        try:
-            txt_paths = tuple(self.FOLDER_PATH.iterdir())
-        except PermissionError as err:
-            raise PermissionError(
-                f'No read permission for the folder.: "{self.FOLDER_PATH}"'
-            ) from err
-
-        if not txt_paths:
-            raise ValueError(f'No txts in the folder.: "{self.FOLDER_PATH}"')
-
-        for txt_path in txt_paths:
-            if not txt_path.is_file():
-                raise ValueError(f'Non-file object in the folder.: "{self.FOLDER_PATH}"')
-
-        return txt_paths
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        self.__txt_paths = self.__get_txt_paths()
-
-    @property
-    def txt_paths(self) -> tuple[Path, ...]:
-        return self.__txt_paths
+        return FilesContainingFolder(Path(arg.strip()))
 
 
 class MoveFromConfig(BaseModel):
@@ -286,14 +299,31 @@ class PathsListingFile:
             list[Path]: List of parsed and validated paths from the file.
 
         Raises:
-            ValueError: If the file contains no valid paths.
+            ValueError: If the file contains no valid paths or duplicated paths.
         """
 
         content = self.__path.read_text(encoding=str(self.__encoding))
         lines = content.split('\n')
         paths = [Path(stripped_line) for line in lines if (stripped_line := line.strip())]
+
         if not paths:
             raise ValueError(f'No valid paths are listed in the file.: "{self.__path}"')
+
+        duplicated_paths: list[Path] = []
+        seen: set[Path] = set()
+        for path in paths:
+            if path not in seen:
+                seen.add(path)
+                continue
+            if path not in duplicated_paths:
+                duplicated_paths.append(path)
+
+        if duplicated_paths:
+            joined_paths = '", "'.join(str(path) for path in duplicated_paths)
+            raise ValueError(
+                f'Some paths in the file "{self.__path}" are duplicated.: "{joined_paths}"'
+            )
+
         return paths
 
 
@@ -563,9 +593,10 @@ def __read_input_txts(input_txts_in_folder_config: TxtsInFolderConfig) -> dict[P
     """
 
     txt_path_to_listed_paths: dict[Path, list[Path]] = {}
+    listed_path_to_txt_paths: dict[Path, list[Path]] = {}
     exceptions: list[Exception] = []
 
-    for txt_path in input_txts_in_folder_config.txt_paths:
+    for txt_path in input_txts_in_folder_config.FOLDER_PATH.file_paths:
 
         try:
             listed_paths = PathsListingFile(
@@ -576,6 +607,16 @@ def __read_input_txts(input_txts_in_folder_config: TxtsInFolderConfig) -> dict[P
             continue
 
         txt_path_to_listed_paths[txt_path] = listed_paths
+        for listed_path in listed_paths:
+            listed_path_to_txt_paths.setdefault(listed_path, []).append(txt_path)
+
+    for listed_path, txt_paths in listed_path_to_txt_paths.items():
+        if len(txt_paths) <= 1:
+            continue
+        joined_paths = '", "'.join(str(path) for path in txt_paths)
+        exceptions.append(
+            ValueError(f'Path "{listed_path}" appears in multiple files.: "{joined_paths}"')
+        )
 
     if exceptions:
         raise ExceptionGroup('Some errors happened while reading TXTs.', exceptions)
