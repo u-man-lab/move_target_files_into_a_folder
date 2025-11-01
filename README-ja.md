@@ -99,6 +99,7 @@ python ./move_target_files_into_a_folder.py ./configs/move_target_files_into_a_f
 2025-10-11 23:27:35,700 [INFO] __main__: All files are successfully moved. Please see the move log "results\move_log.csv".
 2025-10-11 23:27:35,700 [INFO] __main__: "move_target_files_into_a_folder.py" done!
 ```
+参考までに、18,942件の写真・動画ファイルの移動に3分15秒かかりました。Synology DS218（Realtek RTD1296、4コア 1.4 GHz、2GB DDR4）に、2×4TB WD Red（SMR）をRAID1で構成したNAS上で実行しました。
 
 生成されるCSVは次のような形式になります。:
 
