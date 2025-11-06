@@ -16,6 +16,7 @@ from pydantic import (
     Field,
     NewPath,
     PrivateAttr,
+    StrictBool,
     StrictStr,
     field_validator,
     model_validator,
@@ -254,11 +255,15 @@ class Config(BaseModel):
         MOVE_FROM: Move source configuration.
         MOVE_TO: Move destination configuration.
         MOVE_LOG_PATH: Move log file path.
+        DO_COPY:
+            If false, files will be moved.
+            If true, files will be copied and will remain in the original path.
     """
 
     MOVE_FROM: MoveFromConfig
     MOVE_TO: MoveToConfig
     MOVE_LOG_CSV: NewTxtConfig
+    DO_COPY: StrictBool
 
     model_config = ConfigDict(frozen=True, extra='forbid', strict=True)
 
@@ -369,7 +374,11 @@ class MoveFileAsAbsolutePathJoinedNameConfig(BaseModel):
         source_file_path (ExistingAbsoluteFilePath): The source file to move.
         destination_folder_path (Path): Target folder where the file will be moved.
         path_join_char (str): Character used to join path components to form the new filename.
+        do_copy (bool):
+            If false, files will be moved.
+            If true, files will be copied and will remain in the original path.
         __destination_file_path (Path): Final computed destination file path.
+        __verified_file_path_len (int): Path length already verified to be able to exist.
     """
 
     source_file_path: ExistingAbsoluteFilePath
@@ -377,6 +386,7 @@ class MoveFileAsAbsolutePathJoinedNameConfig(BaseModel):
     path_join_char: StrictStr = Field(
         min_length=1, max_length=1, pattern=CharsToEscapeInPath.get_unmatch_char_regex()
     )
+    do_copy: StrictBool
 
     __destination_file_path: Path = PrivateAttr()
     __verified_file_path_len: ClassVar[int] = 0
@@ -538,14 +548,17 @@ class MoveFileAsAbsolutePathJoinedNameConfig(BaseModel):
         self.__validate_destination_file_path()
 
     def execute(self):
-        """Executes the file move operation.
+        """Executes the file move or copy operation.
 
-        Creates the destination folder if it does not exist and moves the file
+        Creates the destination folder if it does not exist and moves or copies the file
         to the computed destination path.
         """
 
         self.destination_folder_path.mkdir(exist_ok=True)
-        shutil.move(str(self.source_file_path), self.__destination_file_path)
+        if not self.do_copy:
+            shutil.move(str(self.source_file_path), self.__destination_file_path)
+        else:
+            shutil.copy2(str(self.source_file_path), self.__destination_file_path)
 
     @property
     def destination_file_path(self) -> Path:
@@ -625,7 +638,7 @@ def __read_input_txts(input_txts_in_folder_config: TxtsInFolderConfig) -> dict[P
 
 
 def __prepare_to_move(
-    txt_path_to_listed_paths: dict[Path, list[Path]], move_to_config: MoveToConfig
+    txt_path_to_listed_paths: dict[Path, list[Path]], move_to_config: MoveToConfig, do_copy: bool
 ) -> dict[Path, list[MoveFileAsAbsolutePathJoinedNameConfig]]:
     """Prepares move configurations for each path listed in TXT files.
 
@@ -633,6 +646,9 @@ def __prepare_to_move(
         txt_path_to_listed_paths (dict[Path, list[Path]]): Mapping of TXT files
             to their listed paths.
         move_to_config (MoveToConfig): Configuration specifying the move destination.
+        do_copy (bool):
+            If false, files will be moved.
+            If true, files will be copied and will remain in the original path.
 
     Returns:
         dict[Path, list[MoveFileAsAbsolutePathJoinedNameConfig]]: Mapping of TXT
@@ -664,6 +680,7 @@ def __prepare_to_move(
                         source_file_path=move_from_path,
                         destination_folder_path=move_to_folder_path,
                         path_join_char=move_to_config.TARGET_FILES_PATH_JOIN_CHAR,
+                        do_copy=do_copy,
                     )
                 )
             except Exception as err:
@@ -712,6 +729,10 @@ def __move_target_files_into_a_folder():
 
     CONFIG: Final[Config] = __read_arg_config_path()
 
+    action_str = 'MOVE' if not CONFIG.DO_COPY else 'COPY'
+    if CONFIG.DO_COPY:
+        logger.warning('Running as "DO_COPY" mode. The original files will be remain.')
+
     try:
         txt_path_to_listed_paths = __read_input_txts(
             CONFIG.MOVE_FROM.TARGET_FILE_ABSOLUTE_PATHS_TXT
@@ -721,7 +742,9 @@ def __move_target_files_into_a_folder():
         sys.exit(1)
 
     try:
-        txt_path_to_move_configs = __prepare_to_move(txt_path_to_listed_paths, CONFIG.MOVE_TO)
+        txt_path_to_move_configs = __prepare_to_move(
+            txt_path_to_listed_paths, CONFIG.MOVE_TO, CONFIG.DO_COPY
+        )
     except ExceptionGroup:
         logger.exception('Script aborted because some errors happened while preparing to move.')
         sys.exit(1)
@@ -734,7 +757,7 @@ def __move_target_files_into_a_folder():
         logger.info(f'  {listed_paths_count} files on the file "{txt_path}".')
     logger.info(f'{total_paths_count} files in total.')
 
-    input_value = input('Are you sure to move the files? ("yes" or others): ')
+    input_value = input(f'Are you sure to {action_str} the files? ("yes" or others): ')
     if input_value != 'yes':
         logger.info(f'"{os.path.basename(__file__)}" is CANCELED.')
         return
@@ -742,11 +765,13 @@ def __move_target_files_into_a_folder():
     try:
         __move_and_log(txt_path_to_move_configs, CONFIG.MOVE_LOG_CSV)
     except Exception:
-        logger.exception('Script aborted because some errors happened while moving a file.')
+        logger.exception(
+            f'Script aborted because some errors happened while {action_str}ing a file.'
+        )
         sys.exit(1)
 
     logger.info(
-        f'All files are successfully moved. Please see the move log "{CONFIG.MOVE_LOG_CSV.PATH}".'
+        f'All files are successfully {action_str}ed. Please see the {action_str} log "{CONFIG.MOVE_LOG_CSV.PATH}".'
     )
 
     logger.info(f'"{os.path.basename(__file__)}" done!')

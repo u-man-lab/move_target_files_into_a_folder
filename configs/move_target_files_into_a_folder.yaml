@@ -20,3 +20,7 @@ MOVE_TO:
 MOVE_LOG_CSV:
   PATH: './results/move_log.csv'
   ENCODING: 'utf-8-sig'
+
+# If false, files will be moved. If true, files will be copied and will remain in the original path.
+# NOTE: If true, the other script "undo_move_target_files_into_a_folder.py" cannot be run.
+DO_COPY: false
