@@ -35,6 +35,9 @@
 - **ライセンス**: このリポジトリ内の[`LICENSE`](./LICENSE)を参照してください。
 - **開発者**: U-MAN Lab. ([https://u-man-lab.com/](https://u-man-lab.com/))
 
+★このリポジトリのスクリプトについて、以下の記事で解説しています。★  
+[[Python] 複数ファイルを一カ所に一括移動/コピー、または一括削除する。 | U-MAN Lab.](https://u-man-lab.com/move-target-files-into-a-folder-by-python/?utm_source=github&utm_medium=social&utm_campaign=move_target_files_into_a_folder)
+
 ---
 
 ## 1. `move_target_files_into_a_folder.py`

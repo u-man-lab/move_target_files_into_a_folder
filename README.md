@@ -35,6 +35,9 @@ The developer assumes no responsibility for any issues that may arise if you mov
 - **License**: See [`LICENSE`](./LICENSE) in this repository.
 - **Developer**: U-MAN Lab. ([https://u-man-lab.com/](https://u-man-lab.com/))
 
+★The scripts in this repository are explained in the following article (in Japanese).★  
+[[Python] 複数ファイルを一カ所に一括移動/コピー、または一括削除する。 | U-MAN Lab.](https://u-man-lab.com/move-target-files-into-a-folder-by-python/?utm_source=github&utm_medium=social&utm_campaign=move_target_files_into_a_folder)
+
 ---
 
 ## 1. `move_target_files_into_a_folder.py`
