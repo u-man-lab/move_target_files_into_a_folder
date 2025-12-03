@@ -4,7 +4,7 @@
 
 ## Overview
 
-This repository provides a Python script that consolidates files scattered across multiple locations on your PC into a single folder. To ensure the move is reversible, it incorporates a mechanism that encodes the absolute path of each file into its new filename after relocation. It also includes a Python script that performs an undo operation based on these new filenames.
+This repository provides Python scripts for moving or copying multiple files into a single folder, or for deleting them in bulk. To ensure the move is reversible, it incorporates a mechanism that encodes the absolute path of each file into its new filename after relocation. It also includes a Python script that performs an undo operation based on these new filenames.
 1. The first script, [`move_target_files_into_a_folder.py`](#1-move_target_files_into_a_folderpy), consolidates multiple files listed in a TXT file into a single destination folder, encoding their original absolute paths into the filenames. By specifying an option in the configuration file, you can also choose to copy files instead of moving them, leaving the original files intact. Additionally, by moving files to a temporary folder and then deleting the entire temporary folder, this can also be used as a script for batch deletion of multiple files.
 2. The second script, [`undo_move_target_files_into_a_folder.py`](#2-undo_move_target_files_into_a_folderpy), restores those files back to their original locations based on the encoded filenames.
 
